@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
@@ -12,6 +13,11 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
   late Wormhole wormhole;
   List<Obstacle> obstacles = [];
   
+  // Visuals
+  final Random _rng = Random();
+  late final List<Offset> _stars;
+  late final List<double> _starBrightness;
+  
   int currentLevelIndex = 0;
   bool isDragging = false;
   Vector2? dragStart;
@@ -22,7 +28,24 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
 
   @override
   Future<void> onLoad() async {
+    _generateStars();
     loadLevel(currentLevelIndex);
+  }
+
+  void _generateStars() {
+    _stars = List.generate(200, (index) {
+      return Offset(
+        _rng.nextDouble() * canvasSize.x,
+        _rng.nextDouble() * canvasSize.y,
+      );
+    });
+    _starBrightness = List.generate(200, (index) => _rng.nextDouble());
+  }
+  
+  @override
+  void onGameResize(Vector2 size) {
+    super.onGameResize(size);
+    _generateStars();
   }
 
   void loadLevel(int index) {
@@ -31,6 +54,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     children.whereType<Wormhole>().forEach((e) => e.removeFromParent());
     children.whereType<Obstacle>().forEach((e) => e.removeFromParent());
     obstacles.clear();
+    shotCount = 0;
 
     if (index >= Levels.levels.length) {
       index = 0; // Loop back or show end screen handling
@@ -65,6 +89,9 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     dragEnd = info.eventPosition.global;
   }
 
+  // Stats
+  int shotCount = 0;
+
   @override
   void onPanEnd(DragEndInfo info) {
     if (!isDragging) return;
@@ -73,8 +100,11 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     // Slingshot logic
     if (dragStart != null && dragEnd != null) {
       final force = dragStart! - dragEnd!;
-      comet.velocity = force * 2.0; // Multiplier for power
-      comet.isLaunched = true;
+      if (force.length > 5) { // Minimum pull
+        comet.velocity = force * 2.0; // Multiplier for power
+        comet.isLaunched = true;
+        shotCount++;
+      }
     }
   }
 
@@ -90,10 +120,19 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
 
   @override
   void render(Canvas canvas) {
+    _renderBackground(canvas);
     super.render(canvas);
     if (isDragging && dragStart != null && dragEnd != null) {
       _drawTrajectory(canvas);
       _drawSlingshotLine(canvas);
+    }
+  }
+
+  void _renderBackground(Canvas canvas) {
+    final starPaint = Paint()..color = Colors.white;
+    for (int i = 0; i < _stars.length; i++) {
+        starPaint.color = Colors.white.withValues(alpha: _starBrightness[i] * 0.8);
+        canvas.drawCircle(_stars[i], _starBrightness[i] * 1.5, starPaint);
     }
   }
 
@@ -141,10 +180,16 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     final paint = Paint()
       ..color = Colors.white.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2
-      ..pathEffect = const PathEffect.dash(PathDashStyle.rotate, 5.0, 5.0); // Dotted line
+      ..strokeWidth = 2;
     
-    canvas.drawPath(path, paint);
+    // Draw dashed path manually
+    final metric = path.computeMetrics().first;
+    double distance = 0.0;
+    while (distance < metric.length) {
+      final extractPath = metric.extractPath(distance, distance + 5.0);
+      canvas.drawPath(extractPath, paint);
+      distance += 10.0;
+    }
   }
 
   void applyPhysics(double dt) {

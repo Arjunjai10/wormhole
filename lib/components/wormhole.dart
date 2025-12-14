@@ -18,17 +18,32 @@ class Wormhole extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
-    final paint = Paint()
-      ..color = Colors.purpleAccent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+    final center = Offset(radius, radius);
 
-    canvas.drawCircle(Offset(radius, radius), radius, paint);
+    // Accretion Disk (Outer Glow)
+    final diskPaint = Paint()
+      ..shader = RadialGradient(
+        colors: [Colors.white, Colors.purpleAccent, Colors.transparent],
+        stops: const [0.5, 0.7, 1.0],
+      ).createShader(Rect.fromCircle(center: center, radius: radius * 1.5))
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    
+    canvas.drawCircle(center, radius * 1.5, diskPaint);
 
-    final innerPaint = Paint()
+    // Event Horizon (Black Void)
+    final holePaint = Paint()
       ..color = Colors.black
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(radius, radius), radius * 0.8, innerPaint);
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2); // Slight edge blur
+
+    canvas.drawCircle(center, radius * 0.8, holePaint);
+    
+    // Singularity Ring (Thin bright ring)
+    final ringPaint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.9)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+      
+   canvas.drawCircle(center, radius * 0.8, ringPaint);
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'dart:ui';
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
@@ -8,6 +9,7 @@ class Comet extends PositionComponent with CollisionCallbacks {
   Vector2 velocity = Vector2.zero();
   final double radius = 10;
   bool isLaunched = false;
+  final Random random = Random();
 
   Comet({required Vector2 position})
       : super(position: position, size: Vector2.all(20), anchor: Anchor.center);
