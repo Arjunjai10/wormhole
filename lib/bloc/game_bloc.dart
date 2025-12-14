@@ -12,6 +12,7 @@ class GameBloc extends Bloc<GameEvent, GameState> {
     on<LevelLost>(_onLevelLost);
     on<NextLevelRequested>(_onNextLevelRequested);
     on<RetryRequested>(_onRetryRequested);
+    on<AutoPlayRequested>(_onAutoPlayRequested);
   }
 
   void _onGameStarted(GameStarted event, Emitter<GameState> emit) {
@@ -48,5 +49,11 @@ class GameBloc extends Bloc<GameEvent, GameState> {
       shotCount: 0,
       status: GameStatus.playing,
     ));
+  }
+
+  void _onAutoPlayRequested(AutoPlayRequested event, Emitter<GameState> emit) {
+    if (state.autoPlayCount > 0) {
+      emit(state.copyWith(autoPlayCount: state.autoPlayCount - 1));
+    }
   }
 }

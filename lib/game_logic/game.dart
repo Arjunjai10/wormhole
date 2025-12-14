@@ -25,6 +25,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
   
   int currentLevelIndex = 0;
   bool isDragging = false;
+  bool isAutoPlaying = false;
   Vector2? dragStart;
   Vector2? dragEnd;
   
@@ -35,6 +36,30 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
   Future<void> onLoad() async {
     _generateStars();
     loadLevel(currentLevelIndex);
+    
+    // Listen for Auto Play Event from Bloc (Simulated via state change check could be tricky, 
+    // better to use stream listen if strictly needed, but here we can check in update or 
+    // simpler: Let the HUD trigger an event, and checking state changes here is hard without a bloc listener.
+    // We will attach a listener to the stream.)
+    bloc.stream.listen((state) {
+        // If we detect the count decreased, trigger auto win.
+        // A cleaner way is to have an `AutoPlayTriggered` state or similar, 
+        // but checking the drop in count works if we track it, or just responding to the event side-effect.
+        // Actually, the HUD handles the UI. The Game needs to handle the logic.
+        // Let's assume the Bloc emits a distinct state or we just trigger the logic from the UI directly calling a game method?
+        // No, UI should fire Event -> Bloc -> State. Game listens to State? 
+        // Or simpler: UI calls Game.autoPlay() which fires Event.
+    });
+  }
+  
+  void triggerAutoWin() {
+     print("AUTO PILOT ENGAGED");
+     isAutoPlaying = true;
+     // Visual hack: Float to wormhole
+     comet.isLaunched = true;
+     // Disable physics
+     comet.velocity = (wormhole.position - comet.position).normalized() * 100;
+     // Logic to ignore gravity will be needed in update
   }
 
   void _generateStars() {
@@ -77,6 +102,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
       add(obs);
       obstacles.add(obs);
     }
+    isAutoPlaying = false;
   }
 
   @override
@@ -114,8 +140,15 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     super.update(dt);
     
     if (comet.isLaunched) {
-      applyPhysics(dt);
-      checkWinCondition();
+      if (isAutoPlaying) {
+          // Direct movement to wormhole
+          final dir = (wormhole.position - comet.position).normalized();
+          comet.position += dir * 200 * dt; // Fast travel
+          checkWinCondition();
+      } else {
+          applyPhysics(dt);
+          checkWinCondition();
+      }
     }
   }
 
@@ -234,18 +267,20 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     }
 
     // Check collision with Obstacles or Bounds
-    for (final obs in obstacles) {
-       if (comet.position.distanceTo(obs.position) < obs.radius + comet.radius) {
-         // CRASH
-         resetLevel();
-         return;
-       }
-    }
+    if (!isAutoPlaying) {
+      for (final obs in obstacles) {
+         if (comet.position.distanceTo(obs.position) < obs.radius + comet.radius) {
+           // CRASH
+           resetLevel();
+           return;
+         }
+      }
 
-    // Bounds check
-    if (comet.position.x < -100 || comet.position.x > canvasSize.x + 100 ||
-        comet.position.y < -100 || comet.position.y > canvasSize.y + 100) {
-      resetLevel();
+      // Bounds check
+      if (comet.position.x < -100 || comet.position.x > canvasSize.x + 100 ||
+          comet.position.y < -100 || comet.position.y > canvasSize.y + 100) {
+        resetLevel();
+      }
     }
   }
 

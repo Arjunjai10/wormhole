@@ -18,3 +18,5 @@ class LevelLost extends GameEvent {}
 class NextLevelRequested extends GameEvent {}
 
 class RetryRequested extends GameEvent {}
+
+class AutoPlayRequested extends GameEvent {}

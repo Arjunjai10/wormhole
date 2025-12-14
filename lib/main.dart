@@ -135,7 +135,51 @@ class GameHUD extends StatelessWidget {
             Positioned(
               top: 20,
               left: 20,
-              child: _IconButton(icon: Icons.help_outline),
+              child: _IconButton(
+                icon: Icons.help_outline,
+                onTap: () {
+                   showDialog(
+                    context: context,
+                    builder: (context) {
+                      return AlertDialog(
+                        backgroundColor: Colors.black.withValues(alpha: 0.8),
+                        title: Text("Mission Directive", style: GoogleFonts.orbitron(color: Colors.cyan)),
+                        content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                                Text(
+                                  Levels.levels[state.levelIndex].hint,
+                                  style: GoogleFonts.playfairDisplay(color: Colors.white, fontSize: 18),
+                                ),
+                                const SizedBox(height: 20),
+                                if (state.autoPlayCount > 0)
+                                    ElevatedButton(
+                                        style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.purple,
+                                            foregroundColor: Colors.white,
+                                        ),
+                                        onPressed: () {
+                                            Navigator.pop(context);
+                                            game.bloc.add(AutoPlayRequested());
+                                            game.triggerAutoWin();
+                                        },
+                                        child: Text("AUTO PILOT (${state.autoPlayCount})", style: GoogleFonts.orbitron()),
+                                    )
+                                else
+                                     Text("Auto Pilot Offline", style: GoogleFonts.orbitron(color: Colors.red)),
+                            ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pop(),
+                            child: Text("Close", style: GoogleFonts.orbitron(color: Colors.cyan)),
+                          )
+                        ],
+                      );
+                    }
+                  );
+                },
+              ),
             ),
             Positioned(
               bottom: 20,
@@ -186,18 +230,22 @@ class _StatItem extends StatelessWidget {
 
 class _IconButton extends StatelessWidget {
   final IconData icon;
-  const _IconButton({required this.icon});
+  final VoidCallback? onTap;
+  const _IconButton({required this.icon, this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        shape: BoxShape.circle,
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.05),
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        ),
+        child: Icon(icon, color: Colors.grey, size: 20),
       ),
-      child: Icon(icon, color: Colors.grey, size: 20),
     );
   }
 }
