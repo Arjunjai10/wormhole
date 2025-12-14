@@ -8,15 +8,21 @@ import 'package:wormhole/components/obstacle.dart';
 import 'package:wormhole/components/wormhole.dart';
 import 'package:wormhole/levels.dart';
 
+import 'package:wormhole/bloc/game_bloc.dart';
+
 class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetector {
+  final GameBloc bloc;
+  
+  CosmicWormholeGame({required this.bloc});
+
   late Comet comet;
   late Wormhole wormhole;
   List<Obstacle> obstacles = [];
   
   // Visuals
   final Random _rng = Random();
-  late final List<Offset> _stars;
-  late final List<double> _starBrightness;
+  late List<Offset> _stars;
+  late List<double> _starBrightness;
   
   int currentLevelIndex = 0;
   bool isDragging = false;
@@ -54,7 +60,6 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     children.whereType<Wormhole>().forEach((e) => e.removeFromParent());
     children.whereType<Obstacle>().forEach((e) => e.removeFromParent());
     obstacles.clear();
-    shotCount = 0;
 
     if (index >= Levels.levels.length) {
       index = 0; // Loop back or show end screen handling
@@ -89,8 +94,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
     dragEnd = info.eventPosition.global;
   }
 
-  // Stats
-  int shotCount = 0;
+
 
   @override
   void onPanEnd(DragEndInfo info) {
@@ -103,7 +107,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
       if (force.length > 5) { // Minimum pull
         comet.velocity = force * 2.0; // Multiplier for power
         comet.isLaunched = true;
-        shotCount++;
+        bloc.add(ShotFired());
       }
     }
   }
@@ -228,6 +232,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
       print("WIN!");
       comet.isLaunched = false;
       comet.velocity = Vector2.zero();
+      bloc.add(LevelWon());
       overlays.add('LevelComplete');
     }
 
@@ -249,6 +254,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
 
   void resetLevel() {
     print("LOST");
+    bloc.add(LevelLost());
     comet.isLaunched = false;
     comet.velocity = Vector2.zero();
     comet.position = Levels.levels[currentLevelIndex].startPosition;
