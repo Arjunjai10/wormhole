@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:wormhole/bloc/game_bloc.dart';
-import 'game.dart';
+import 'game_logic/game.dart';
+import 'game_logic/levels.dart';
 
 void main() {
   runApp(const MaterialApp(

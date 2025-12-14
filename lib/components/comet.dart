@@ -27,20 +27,30 @@ class Comet extends PositionComponent with CollisionCallbacks {
     position += velocity * dt;
 
     // Trail effect
-    if (velocity.length > 5) {
-      add(ParticleSystemComponent(
+    if (velocity.length > 5 && isMounted) {
+     // Use parent to add particles so they don't move with the comet component
+      parent?.add(ParticleSystemComponent(
         particle: Particle.generate(
-          count: 2,
-          lifespan: 0.5,
-          generator: (i) => AcceleratedParticle(
-            acceleration: -velocity.normalized() * 50,
-            speed: Vector2.random(random) * 20,
-            position: position.clone(),
-            child: CircleParticle(
-              radius: 2,
-              paint: Paint()..color = Colors.white.withValues(alpha: 0.5),
+          count: 5,
+          lifespan: 0.6,
+          generator: (i) {
+            final rng = random;
+            return AcceleratedParticle(
+            acceleration: -velocity.normalized() * 10, // Slight drag
+            speed: Vector2(rng.nextDouble() - 0.5, rng.nextDouble() - 0.5) * 20,
+            position: position.clone() + Vector2(rng.nextDouble() - 0.5, rng.nextDouble() - 0.5) * 5,
+            child: ComputedParticle(
+              renderer: (canvas, particle) {
+                final paint = Paint()
+                  ..color = Color.lerp(Colors.cyanAccent, Colors.purpleAccent, particle.progress)!
+                      .withValues(alpha: (1 - particle.progress) * 0.6)
+                  ..style = PaintingStyle.fill;
+                  
+                canvas.drawCircle(Offset.zero, (1 - particle.progress) * 4, paint);
+              }
             ),
-          ),
+          );
+          },
         ),
       ));
     }

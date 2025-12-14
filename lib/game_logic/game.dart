@@ -6,8 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:wormhole/components/comet.dart';
 import 'package:wormhole/components/obstacle.dart';
 import 'package:wormhole/components/wormhole.dart';
-import 'package:wormhole/levels.dart';
-
+import 'package:wormhole/game_logic/levels.dart';
 import 'package:wormhole/bloc/game_bloc.dart';
 
 class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetector {
@@ -30,7 +29,7 @@ class CosmicWormholeGame extends FlameGame with HasCollisionDetection, PanDetect
   Vector2? dragEnd;
   
   // Physics Constants
-  static const double G = 15.0; // Gravitational constant
+  static const double G = 25.0; // Gravitational constant
 
   @override
   Future<void> onLoad() async {
